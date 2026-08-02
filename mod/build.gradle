@@ -1,0 +1,103 @@
+// ============================================================
+// EasyAI-Minecraft - Fabric Mod 构建脚本 (Minecraft 1.21.1)
+// ============================================================
+// 使用 Fabric Loom 1.7 自动处理 Mixin 注入、依赖解包与反混淆映射
+// ============================================================
+
+plugins {
+    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+// ------------------------------------------------------------
+// 依赖版本统一管理（从 gradle.properties 读取）
+// ------------------------------------------------------------
+def minecraftVersion = project.minecraft_version
+def yarnMappings     = project.yarn_mappings
+def loaderVersion    = project.loader_version
+def fabricVersion    = project.fabric_version
+
+// Baritone 使用项目内 API 桩代码（见 dependencies 注释）
+
+dependencies {
+    // Minecraft 本体（由 Loom 自动从官方源拉取并解包）
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    // Yarn 反混淆映射——将混淆名映射为可读的 Yarn 名
+    mappings "net.fabricmc:yarn:${yarnMappings}:v2"
+    // Fabric Loader——提供 Mod 加载与 Mixin 运行时
+    modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
+    // Fabric API——事件、注册表等基础库
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
+
+    // Java-WebSocket——用于连接 Python WebSocket 服务器
+    include(implementation("org.java-websocket:Java-WebSocket:1.5.7"))
+    // Gson——JSON 序列化（Fabric 已内嵌，但显式声明以防万一）
+    include(implementation("com.google.code.gson:gson:2.11.0"))
+    // SLF4J——日志门面（Fabric 已内嵌）
+    include(implementation("org.slf4j:slf4j-api:2.0.13"))
+
+    // Baritone 寻路引擎——可选依赖
+    // 运行时由用户单独安装 Baritone mod；编译期使用项目内的 API 桩代码
+    // 桩代码位于 src/main/java/baritone/api/，打包时排除（见 jar 配置）
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.fabricmc.net/" }
+    // Fabric API 仓库（备用镜像）
+    maven { url = "https://maven.nucleoid.xyz/" }
+}
+
+// ------------------------------------------------------------
+// Loom 配置——确保 Mixin 在编译期被正确处理
+// ------------------------------------------------------------
+loom {
+    // 开启 Mixin 编译期校验，防止注入目标签名不匹配
+    mixin {
+        defaultRefmapName = "easyai.refmap.json"
+    }
+    // 运行配置——自动注入 Mod 到测试客户端
+    runs {
+        client {
+            client()
+            setConfigName("Hermes Client")
+            ideConfigGenerated(true)
+            runDir = "run"
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// Java 编译器版本——MC 1.21 要求 Java 21+
+// ------------------------------------------------------------
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+}
+
+processResources {
+    // 将 gradle.properties 中的版本号注入 fabric.mod.json
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+// ------------------------------------------------------------
+// JAR 打包配置——将依赖打包进最终 JAR
+// ------------------------------------------------------------
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}" }
+    }
+    // 排除 Baritone 桩代码——运行时由真实 Baritone mod 提供实现
+    exclude 'baritone/**'
+    // 确保 Mixin refmap 被包含
+    from("build/tmp/loom-cache")
+    archiveBaseName = "EasyAI"
+    archiveVersion = project.mod_version
+}
