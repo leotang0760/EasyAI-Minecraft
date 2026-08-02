@@ -1,0 +1,51 @@
+# ============================================================
+# EasyAI-Minecraft .gitignore
+# ============================================================
+
+# ---- Java / Gradle ----
+.gradle/
+build/
+out/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---- Loom 缓存 ----
+run/
+loom-cache/
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 项目运行时 ----
+logs/
+*.log
+config/passwords.json
+
+# ---- Gradle 本地安装（不入库）----
+gradle-8.8/
+gradle-8.8-bin.zip
+
+# ---- 临时文件 ----
+*.tmp
+*.bak
