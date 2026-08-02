@@ -1,10 +1,11 @@
 {
     "ai_name": "EasyAI",
     "ws_port": 8765,
+    "web_port": 8080,
     "mc_version": "1.21.1",
     "mod_version": "2.0.0",
     "llm_mode": "offline",
-    "ollama_model": "llama3.1",
+    "ollama_model": "gemma3:270m",
     "ollama_host": "http://127.0.0.1:11434",
     "openai_api_key": "",
     "openai_model": "gpt-4o-mini",
