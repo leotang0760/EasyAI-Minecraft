@@ -39,12 +39,16 @@ class CmdConsole:
         self.on_command = on_command
 
         if PROMPT_TOOLKIT_AVAILABLE:
-            self.session = PromptSession()
-            self.history = InMemoryHistory()
             self.completer = WordCompleter(
                 self.COMMANDS,
                 ignore_case=True,
                 sentence=True,
+            )
+            # prompt_toolkit 3.x: 参数在构造函数中设置，而非 prompt() 方法
+            self.session = PromptSession(
+                history=InMemoryHistory(),
+                auto_suggest=AutoSuggestFromHistory(),
+                completer=self.completer,
             )
         else:
             self.session = None
@@ -63,12 +67,7 @@ class CmdConsole:
             try:
                 if PROMPT_TOOLKIT_AVAILABLE:
                     # 使用 prompt_toolkit（支持历史记录和自动补全）
-                    user_input = self.session.prompt(
-                        "easyai> ",
-                        history=self.history,
-                        auto_suggest=AutoSuggestFromHistory(),
-                        completer=self.completer,
-                    )
+                    user_input = self.session.prompt("easyai> ")
                 else:
                     # 回退到基础 input()
                     user_input = input("easyai> ")
