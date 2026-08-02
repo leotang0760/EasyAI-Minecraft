@@ -94,8 +94,8 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
-    // 排除 Baritone 桩代码——运行时由真实 Baritone mod 提供实现
-    exclude 'baritone/**'
+    // Baritone 桩代码必须打包进 JAR——否则无 Baritone 时类加载失败
+    // 当真实 Baritone 安装时，Fabric 类加载器会优先使用其实现
     // 确保 Mixin refmap 被包含
     from("build/tmp/loom-cache")
     archiveBaseName = "EasyAI"
