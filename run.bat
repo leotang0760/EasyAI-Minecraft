@@ -42,18 +42,19 @@ if not exist "%~dp0logs" (
 )
 
 REM ============================================================
-REM 4. 启动 Python 后端
+REM 4. 启动 Python 后端 + WebUI
 REM ============================================================
-echo [2/3] 启动 Project EasyAI AI 后端...
-echo [3/3] WebSocket 服务器将在 127.0.0.1:8765 监听
+echo [2/3] 启动 EasyAI-Minecraft AI 后端...
+echo [3/3] WebSocket :8765 + WebUI :8080
 echo.
 echo ============================================================
+echo   WebUI 控制台: http://127.0.0.1:8080
 echo   请在 PCL2 中启动加载了 EasyAI Mod 的 Minecraft 客户端
-echo   日志栏将显示 "[系统] 本地端口8765握手成功，AI实体已注入"
 echo ============================================================
 echo.
 
 cd /d "%~dp0"
+start "" http://127.0.0.1:8080
 python "%~dp0python\main.py"
 
 pause
