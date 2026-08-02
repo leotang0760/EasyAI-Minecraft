@@ -1,0 +1,53 @@
+{
+    "quest_name": "前往末地",
+    "description": "收集末影珍珠 -> 制作末影之眼 -> 寻找要塞 -> 进入末地",
+    "steps": [
+        {
+            "step": 1,
+            "action": "collect",
+            "target": "ender_pearl",
+            "count": 12,
+            "fallback_llm": "如果无法获得末影珍珠，请寻找替代方案",
+            "description": "击杀末影人或与村民交易获取至少12颗末影珍珠"
+        },
+        {
+            "step": 2,
+            "action": "craft",
+            "target": "ender_eye",
+            "count": 12,
+            "requires": {"ender_pearl": 12, "blaze_powder": 12},
+            "fallback_llm": "如果没有烈焰粉，需要前往下界击杀烈焰人",
+            "description": "用末影珍珠 + 烈焰粉合成末影之眼"
+        },
+        {
+            "step": 3,
+            "action": "find",
+            "target": "stronghold",
+            "method": "throw_ender_eye",
+            "description": "向空中投掷末影之眼，跟随其飞行方向寻找要塞"
+        },
+        {
+            "step": 4,
+            "action": "goto",
+            "target": "end_portal_room",
+            "description": "进入要塞，找到末地传送门房间"
+        },
+        {
+            "step": 5,
+            "action": "activate",
+            "target": "end_portal",
+            "requires": {"ender_eye": 12},
+            "description": "将末影之眼放入传送门框架激活末地传送门"
+        },
+        {
+            "step": 6,
+            "action": "enter",
+            "target": "the_end",
+            "description": "进入末地"
+        }
+    ],
+    "on_failure": {
+        "retry": 3,
+        "fallback_llm": "任务链失败，请LLM分析原因并生成替代方案"
+    }
+}
