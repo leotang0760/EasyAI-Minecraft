@@ -22,6 +22,21 @@ except ImportError:
     print("警告: prompt_toolkit 未安装，将使用基础 input()。请运行 pip install prompt_toolkit")
 
 
+def _create_session(completer):
+    """安全创建 PromptSession，在不支持的终端回退为 None"""
+    if not PROMPT_TOOLKIT_AVAILABLE:
+        return None
+    try:
+        return PromptSession(
+            history=InMemoryHistory(),
+            auto_suggest=AutoSuggestFromHistory(),
+            completer=completer,
+        )
+    except Exception:
+        # NoConsoleScreenBufferError: Git Bash / IDE 终端等非 cmd 环境
+        return None
+
+
 class CmdConsole:
     """命令输入控制台"""
 
@@ -39,17 +54,12 @@ class CmdConsole:
         self.on_command = on_command
 
         if PROMPT_TOOLKIT_AVAILABLE:
-            self.completer = WordCompleter(
+            completer = WordCompleter(
                 self.COMMANDS,
                 ignore_case=True,
                 sentence=True,
             )
-            # prompt_toolkit 3.x: 参数在构造函数中设置，而非 prompt() 方法
-            self.session = PromptSession(
-                history=InMemoryHistory(),
-                auto_suggest=AutoSuggestFromHistory(),
-                completer=self.completer,
-            )
+            self.session = _create_session(completer)
         else:
             self.session = None
 
@@ -65,7 +75,7 @@ class CmdConsole:
 
         while True:
             try:
-                if PROMPT_TOOLKIT_AVAILABLE:
+                if self.session is not None:
                     # 使用 prompt_toolkit（支持历史记录和自动补全）
                     user_input = self.session.prompt("easyai> ")
                 else:
