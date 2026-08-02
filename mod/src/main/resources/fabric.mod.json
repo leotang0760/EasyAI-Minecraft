@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "easyai",
+  "version": "${version}",
+  "name": "EasyAI-Minecraft",
+  "description": "Embodied AI System for Minecraft 1.21.1 - Cloud Brain + Local Body Architecture",
+  "authors": ["EasyAI-Minecraft Team"],
+  "contact": {
+    "homepage": "https://github.com/easyai-minecraft",
+    "sources": "https://github.com/easyai-minecraft/easyai-minecraft"
+  },
+  "license": "MIT",
+  "icon": "assets/easyai/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.easyai.EasyAIMod"
+    ]
+  },
+  "mixins": [
+    "easyai.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "baritone": "*"
+  }
+}
