@@ -1,0 +1,12 @@
+// ============================================================
+// EasyAI-Minecraft - Gradle 设置文件 (MC 1.21.1)
+// ============================================================
+pluginManagement {
+    repositories {
+        maven { url = "https://maven.fabricmc.net/" }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "EasyAI"
