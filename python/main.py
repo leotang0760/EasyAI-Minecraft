@@ -38,6 +38,7 @@ from brain.survival_advisor import SurvivalAdvisor
 from memory.failure_repo import FailureRepo
 from ui.log_console import LogConsole
 from ui.cmd_console import CmdConsole
+from ui.web_server import WebServer
 
 
 class EasyAIBackend:
@@ -73,6 +74,20 @@ class EasyAIBackend:
         # UI
         self.log_console = LogConsole()
         self.cmd_console = CmdConsole(self._on_admin_command)
+
+        # WebUI 服务
+        self.web_port = self.config.get("web_port", 8080)
+        self.web_server = WebServer(
+            port=self.web_port,
+            on_command=self._on_admin_command,
+            get_state=lambda: self.current_state,
+            get_config=lambda: self.config,
+            get_whitelist=lambda: self.whitelist,
+            get_passwords=lambda: self.passwords,
+            get_quest_progress=lambda: self.quest_engine.get_progress(),
+            on_whitelist_update=self._on_whitelist_update,
+            on_config_update=self._on_config_update,
+        )
 
         # 最新状态缓存
         self.current_state = {}
@@ -124,6 +139,22 @@ class EasyAIBackend:
             json.dump(self.passwords, f, ensure_ascii=False, indent=2)
 
     # ============================================================
+    # WebUI 回调
+    # ============================================================
+    def _on_whitelist_update(self, new_whitelist: list):
+        """WebUI 更新白名单"""
+        self.whitelist = new_whitelist
+        self._save_whitelist()
+        self.command_parser.whitelist = self.whitelist
+
+    def _on_config_update(self, new_config: dict):
+        """WebUI 更新配置"""
+        self.config.update(new_config)
+        config_path = PROJECT_ROOT / "config" / "settings.json"
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(self.config, f, ensure_ascii=False, indent=2)
+
+    # ============================================================
     # WebSocket 回调
     # ============================================================
     def _on_state_update(self, state: dict):
@@ -131,19 +162,28 @@ class EasyAIBackend:
         self.current_state = state
         self.log_console.log_state(state)
 
+        # 广播到 WebUI
+        asyncio.get_event_loop().create_task(
+            self.web_server.broadcast_state(state))
+
         # 生存分析：检测危险状态
         suggestions = self.survival_advisor.analyze(state)
         for s in suggestions:
             if s["priority"] <= 1:  # CRITICAL 或 HIGH
-                self.log_console.log_error(
-                    f"生存警告: {s['suggestion']} (优先级: {s['priority']})"
-                )
+                msg = f"生存警告: {s['suggestion']} (优先级: {s['priority']})"
+                self.log_console.log_error(msg)
+                asyncio.get_event_loop().create_task(
+                    self.web_server.broadcast_log("error", msg))
 
     def _on_chat_event(self, chat: dict):
         """游戏内聊天事件"""
         sender = chat.get("sender", "Unknown")
         msg = chat.get("msg", "")
         self.log_console.log_chat(sender, msg)
+
+        # 广播到 WebUI
+        asyncio.get_event_loop().create_task(
+            self.web_server.broadcast_chat(sender, msg))
 
         # 解析 @ 指令
         result = self.command_parser.parse(sender, msg)
@@ -435,6 +475,11 @@ class EasyAIBackend:
         self.log_console.log_system(
             f"[系统] 本地端口 {self.ws_port} 监听中，等待 Mod 连接...")
 
+        # 启动 WebUI 服务
+        web_task = asyncio.create_task(self.web_server.start())
+        self.log_console.log_system(
+            f"[系统] WebUI 控制台: http://127.0.0.1:{self.web_port}")
+
         # 在独立线程中启动命令控制台
         cmd_thread = threading.Thread(
             target=self.cmd_console.run, daemon=True, name="CmdConsole"
@@ -450,6 +495,7 @@ class EasyAIBackend:
 
         # 清理
         await self.ws_server.stop()
+        await self.web_server.stop()
         self.failure_repo.close()
         self.log_console.log_system("Project EasyAI 已关闭")
 
